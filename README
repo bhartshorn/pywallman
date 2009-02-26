@@ -1,1 +1,2 @@
-Yeah, so there's nothing done yet.... I'll get ot updating this when there is. :)
+Yeah, so, amazingly, the script will download a wallpaper and save it... As of now, it's more of a dirty hack to get it to do that. 
+It will become (very) much more sophisticated. As of now, -u and -n must both be passed in order to run the script. (See pywallman.py -h)

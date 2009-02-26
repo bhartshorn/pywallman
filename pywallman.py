@@ -3,6 +3,7 @@
 import os
 import string
 import sys
+import urllib
 from os.path import isdir, exists, expanduser
 from time import localtime
 from optparse import OptionParser
@@ -16,10 +17,10 @@ default_savedir = "~/pictures/wallpapers/test/"
 parser = OptionParser()
 parser.add_option("-g", "--genre", dest="genre", default="", help="Define which 'genre' or subdirectory to save a wallpaper in")
 parser.add_option("-f", "--file", dest="filename", help="Changes output name of file downloaded", metavar="FILE")
-parser.add_option("-u", "--url", dest="fetch_url", default="" help="Set the url from which the script will fetch an image")
+parser.add_option("-u", "--url", dest="fetch_url", default="", help="Set the url from which the script will fetch an image")
 parser.add_option("-q", "--quiet", action="store_false", dest="verbose", default=True, help="Don't print status messages to stdout")
 parser.add_option("-l", "--local", action="store_true", dest="local", default=False, help="Performs actions on local wallpapers")
-parser.option_add("-c", "--create", action="store_true", dest="create_dir", default=False, help="Create directory for genre")
+parser.add_option("-c", "--create", action="store_true", dest="create_dir", default=False, help="Create directory for genre")
 
 (options, args) = parser.parse_args()
 
@@ -33,8 +34,7 @@ def scriptStatus(status):
 
 def downloadWall(url, path, name):
 # Actually downloads the wallpaper file, given 
-	try:
-		urllib.urlretrieve(url, path)
+	urllib.urlretrieve(url, path)
 
 def checkPath():
 	full_path = os.path.expanduser(default_savedir + options.genre)
@@ -48,4 +48,5 @@ def checkPath():
 
 if not options.fetch_url == "" and checkPath():
 	scriptStatus("Found url on cmd line - parsing and checking for genre")
+	full_path = os.path.expanduser(default_savedir + options.genre + options.filename)	
 	downloadWall(options.fetch_url, full_path, options.filename)
