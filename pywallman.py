@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os, string, sys, urllib, urlparse
-from time import localtime
+import os, string, sys, urllib, urlparse, hashlib, sqlite3
+from time import strftime
 from optparse import OptionParser
 
 ## Defaults
@@ -9,13 +9,15 @@ from optparse import OptionParser
 # The script looks for genre specified with -g under this dir and saves it there.
 # Leave a trailing slash (eg. "~/pictures/wallpapers/")
 default_savedir = "~/pictures/wallpapers/test/"
+default_database = "~/.pywallman/walls.db"
 
 parser = OptionParser()
 parser.add_option("-g", "--genre", dest="genre", default="", help="Define which 'genre' or subdirectory to save a wallpaper in")
 parser.add_option("-f", "--file", dest="filename", default="", help="Changes output name of file downloaded - make SURE you set correct extension", metavar="FILE")
 parser.add_option("-u", "--url", dest="fetch_url", default="", help="Set the url from which the script will fetch an image")
+parser.add_option("-d", "--desc", dest="description", default="", help="Set the description for the wallpaper - stick to 1 or 2 descriptive words")
 parser.add_option("-q", "--quiet", action="store_false", dest="verbose", default=True, help="Don't print status messages to stdout")
-parser.add_option("-l", "--local", action="store_true", dest="local", default=False, help="Performs actions on local wallpapers")
+parser.add_option("-l", "--local",  dest="local", default="", help="Performs actions on local wallpapers")
 parser.add_option("-c", "--create", action="store_true", dest="create_dir", default=False, help="Create directory for genre")
 
 (options, args) = parser.parse_args()
@@ -29,8 +31,9 @@ def scriptStatus(status):
 		return False
 
 def downloadWall(url, path):
-	# Actually downloads the wallpaper file, given 
+	# Actually download the wallpaper file, given the url and the path to save to
 	urllib.urlretrieve(url, path)
+	return True
 
 def checkPath():
 	global full_path
@@ -47,23 +50,54 @@ def checkPath():
 			full_path = os.path.join(full_path, options.filename)
 
 		if os.path.exists(full_path):
-			scriptStatus("File already exists")
+			# Make sure we won't overwrite an existing file
+			scriptStatus("Pathchecker: File already exists")
 			return False
 		else:
-			scriptStatus("Path: " + full_path)
+			scriptStatus("Pathchecker: Full path is  " + full_path)
 			return True
 	else:
-		scriptStatus("Path/Genre doesn't exist or isn't a directory")
+		scriptStatus("Pathchecker: Path/Genre doesn't exist or isn't a directory")
 		return False
 
-def pickleData(path, description, date):
-	if description == "":
-		description
+def saveData(path, description, date):
+	db_path = os.path.expanduser(default_database)
+
+	if not os.path.exists(db_path):
+		scriptStatus("Save: database doesn't exist, creating")
+		sql_conn = sqlite3.connect(db_path)
+		sql_curs = sql_conn.cursor()
+		sql_curs.execute('''create table wallpapers(date text, md5 text, description text, path text)''')
+		sql_conn.commit()
+		sql_curs.close()
+
+	if os.path.exists(path) and os.path.isfile(path):
+		scriptStatus("Save: database exists, loading and pickling data")
+		image_file = open(path, "rb")
+		image_md5 = hashlib.md5(image_file.read()).hexdigest()
+		image_file.close()
+		scriptStatus("Save: md5 of image is " + image_md5)
+		if options.description == "":
+			options.description = options.filename
+		image_info = (strftime("%Y-%m-%d %H:%M:%S"), image_md5, options.description, path)
+		sql_conn = sqlite3.connect(db_path)
+		sql_curs = sql_conn.cursor()
+		sql_curs.execute('insert into wallpapers values(?,?,?,?)', image_info)
+		sql_conn.commit()
+		sql_curs.close()
+
+	if os.path.exists(db_path) and os.path.isdir(db_path):
+		sql_conn = sqlite3.connect(db_path)
+		sql_curs = sql_conn.cursor()
 
 
 # Main program logic
-if not options.fetch_url == "" and checkPath():
-	scriptStatus("Found url on cmd line - parsing and checking for genre")
-	downloadWall(options.fetch_url, full_path)
+if not options.local == "":
+	scriptStatus("Main: Adding local image to database")
+	saveData(options.local, options.description, "")
+elif not options.fetch_url == "" and checkPath():
+	scriptStatus("Main: Found url on cmd line - parsing and checking for genre")
+	if downloadWall(options.fetch_url, full_path):
+		saveData(full_path, options.description, "")
 else:
 	scriptStatus("Nothing to do - exiting")
