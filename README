@@ -1,4 +1,17 @@
-Yeah, so, amazingly, the script will download a wallpaper and save it... As of now, it's more of a dirty hack to get it to do that. 
-It will become (very) much more sophisticated. As of now, -u must be passed for the script to run. -g should also work fine, 
-but there will be glitches and bugs. The script still only downloads and saves an image. Automatic naming of the file is not well-tested,
-and probably buggy. (See pywallman.py -h)
+The script now supports downloading a wallpaper, placing it properly in a directory and inserting the md5 hash
+and other information into an sqlite3 database. Make sure you either change the default_database variable, or
+create ~/.pywallman. The sqlite work right now is very primitive - it doesn't even check if the image is 
+already in the database - please be sure to do that yourself. ;) I also need to escape spaces in descriptions
+so it can properly store them - use underscores for now.
+
+Supported actions:
+-l for adding local files to the db (Supply file name and location.
+-g genre/folder to place the wallpaper in
+-u to supply the url to download
+-d for description within the database
+-q for quiet/non-verbose, not recomended
+-f for filename to save image as, does not set extension automatically, so please do that yourself.
+
+Feel free to give it a try, run it through it's paces, and contact me if something goes wrong. You can get
+me on msn at go__cart91 at hotmail dot com, on irc at freenode, #archlinux (privmsg me), or by email with
+the same email as my msn account.
