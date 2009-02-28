@@ -67,9 +67,10 @@ def saveData(path, description, date):
 		scriptStatus("Save: database doesn't exist, creating")
 		sql_conn = sqlite3.connect(db_path)
 		sql_curs = sql_conn.cursor()
-		sql_curs.execute('''create table wallpapers(date text, md5 text, description text, path text)''')
+		sql_curs.execute('''CREATE TABLE wallpapers(date text, md5 text, description text, path text)''')
 		sql_conn.commit()
 		sql_curs.close()
+		sql_conn.close()
 
 	if os.path.exists(path) and os.path.isfile(path):
 		scriptStatus("Save: database exists, loading and pickling data")
@@ -77,14 +78,24 @@ def saveData(path, description, date):
 		image_md5 = hashlib.md5(image_file.read()).hexdigest()
 		image_file.close()
 		scriptStatus("Save: md5 of image is " + image_md5)
+
 		if options.description == "":
 			options.description = options.filename
-		image_info = (strftime("%Y-%m-%d %H:%M:%S"), image_md5, options.description, path)
+
 		sql_conn = sqlite3.connect(db_path)
 		sql_curs = sql_conn.cursor()
-		sql_curs.execute('insert into wallpapers values(?,?,?,?)', image_info)
+		sql_result = sql_curs.execute('''SELECT * FROM wallpapers WHERE md5 = ?''', (image_md5,)).fetchone()
+		
+		if not sql_result == "":
+			image_info = (options.description, path)
+			scriptStatus("Save: record already exists, updating info")
+			sql_curs.execute('''UPDATE wallpapers SET description = ?, path = ?''', image_info)
+		else:
+			image_info = (strftime("%Y-%m-%d %H:%M:%S"), image_md5, options.description, path)
+			sql_curs.execute('''INSERT INTO wallpapers VALUES(?,?,?,?)''', image_info)
 		sql_conn.commit()
 		sql_curs.close()
+		sql_conn.close()
 
 	if os.path.exists(db_path) and os.path.isdir(db_path):
 		sql_conn = sqlite3.connect(db_path)
