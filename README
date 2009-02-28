@@ -1,8 +1,7 @@
 The script now supports downloading a wallpaper, placing it properly in a directory and inserting the md5 hash
 and other information into an sqlite3 database. Make sure you either change the default_database variable, or
-create ~/.pywallman. The sqlite work right now is very primitive - it doesn't even check if the image is 
-already in the database - please be sure to do that yourself. ;) I also need to escape spaces in descriptions
-so it can properly store them - use underscores for now.
+create ~/.pywallman. The sqlite work now checks if the image is already in the database and simply updates if
+it is. I also need to escape spaces in descriptions so it can properly store them - use underscores for now.
 
 Supported actions:
 -l for adding local files to the db (Supply file name and location.
